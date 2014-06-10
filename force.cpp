@@ -2,6 +2,8 @@
 #include <sundials/sundials_types.h>
 #include <cvode/cvode.h>
 #include <sundials/sundials_math.h>
+#include <cstdio>
+#include <iostream>
 
 #include "force.h"
 
@@ -18,6 +20,18 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 
 	//Number of points for our configuration
 	int numPoints = 12, size = numPoints*3;
+
+
+	//NOTE: assigment of spring points should be in struct; this is a temporary assignment for testing purposes
+	int espringlist[] = { 0,1,0,1,2,0,2,3,0,3,4,
+			       	       0,4,5,0,5,0,0,0,6,1,1,6,1,2,6,1,3,6,1,4,6,1,5,
+				       6,1,5,10,0,10,9,0,8,7,0,7,4,0,5,11,1,10,11,1,
+				       9,11,1,8,11,1,7,11,1,4,11,1};
+
+	int tspringlist[] = { 1,6,0,5,1,0,1,6,2,1,1,2,6,3,1,2,3,6,4,
+						1,3,4,6,5,0,4,5,6,0,1,6,4,5,11,0,4,11,
+						5,10,1,5,11,10,9,1,10,11,9,8,1,9,11,
+						8,7,1,8,11,7,4,1 };
 	 
 	
 	//INITIALIZE UDOT
@@ -26,13 +40,17 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 		NV_Ith_S(udot,i) = 0;
 	}
 
-	realtype gradient[12];
+	int count = 0;
+	//calculate extensible springs
 	for (int i = 0; i < test.espringsize; ++i)
 	{
-		if (i % test.forceIndexE == 1) {
-			int x1index = test.espringlist[i-2], x2index = test.espringlist[i-1];
-			int y1index = test.espringlist[i-2]+numPoints, y2index = test.espringlist[i-1]+numPoints;
-			int z1index = test.espringlist[i-2]+2*(numPoints), z2index = test.espringlist[i-1]+2*(numPoints);
+		if (i % test.forceIndexE == 2) {
+			int x1index = espringlist[i-2];
+			int x2index = espringlist[i-1];
+			int y1index = x1index+numPoints;
+			int y2index = x2index+numPoints;
+			int z1index = x1index+2*(numPoints);
+			int z2index = x2index+2*(numPoints);
 
 			realtype x1 = NV_Ith_S(u,x1index);
 			realtype x2 = NV_Ith_S(u,x2index);
@@ -43,24 +61,19 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 			realtype z1 = NV_Ith_S(u,z1index);
 			realtype z2 = NV_Ith_S(u,z2index);
 
-			//pass in array with point coordinates
-			realtype pointslist[] = {x1,x2,y1,y2,z1,z2};
-			//re-initialize gradient array to 0
-			for (int i = 0; i < 6; ++i)
-			{
-				gradient[i] = 0;
-			}
-			gradient[0] = calcRegularSpring(pointslist,test.ks,test.l);
-			gradient[1] = calcRegularSpring(pointslist,test.ks,test.l)*-1;
 
+			realtype dist = sqrt( pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
+			realtype xgrad = test.ks*(dist-test.l)*(x1-x2)/(dist);
+			realtype ygrad = test.ks*(dist-test.l)*(y1-y2)/(dist);
+			realtype zgrad = test.ks*(dist-test.l)*(z1-z2)/(dist);
 
+			NV_Ith_S(udot, x1index) += xgrad;
+			NV_Ith_S(udot, x2index) -= xgrad;
+			NV_Ith_S(udot, y1index) += ygrad;
+			NV_Ith_S(udot, y2index) -= ygrad;
+			NV_Ith_S(udot, z1index) += zgrad;
+			NV_Ith_S(udot, z2index) -= zgrad;
 
-			NV_Ith_S(udot, x1index) += gradient[0];
-			NV_Ith_S(udot, x2index) += gradient[1];
-			NV_Ith_S(udot, y1index) += gradient[2];
-			NV_Ith_S(udot, y2index) += gradient[3];
-			NV_Ith_S(udot, z1index) = 0;
-			NV_Ith_S(udot, z2index) = 0;
 		} 
 	}
 
@@ -71,23 +84,6 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 
 }
 
-
-realtype calcRegularSpring(realtype pointslist[], realtype ks, realtype l)
-{
-	realtype x1 = pointslist[0];
-	realtype x2 = pointslist[1];
-	realtype y1 = pointslist[2];
-	realtype y2 = pointslist[3];
-	realtype z1 = pointslist[4];
-	realtype z2 = pointslist[5];
-	realtype dist = sqrt( pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
-	realtype xgrad = ks*(dist-l)*(x1-x2)/dist;
-	realtype ygrad = ks*(dist-l)*(y1-y2)/dist;
-	realtype zgrad = ks*(dist-l)*(z1-z2)/dist;
-
-	return xgrad;
-
-}
 
 //returns gradient for x coordinate; to get y or z gradient, just input in different order
 realtype calcTorsionalSpring(realtype kb, realtype pointslist[])

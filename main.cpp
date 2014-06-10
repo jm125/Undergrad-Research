@@ -18,7 +18,10 @@ int main()
 	//initialize xyz coordinates for all 12 points
 	realtype init[] = { 0.5,0,0.5,1.5,2,1.5,1,3,3.5,3,2,2.5,
 				  2,1,0,0,1,2,1,1,2,3,3,2,
-				  0,0,0,0,0,0,0,0,0,0,0,0 };
+				  1,0,1,0,1,0,1,0,1,0,1,0 };
+	std::cout << "\nInitial list:";
+	printPoints(init, 12);
+
 	N_Vector u = N_VMake_Serial(36, init);
 	
 	//set tolerances
@@ -32,7 +35,8 @@ int main()
 
 	flag = CVodeSetUserData(cvode_mem, &testhex);
 
-	realtype tout = 1000, t;
+	realtype tout = 1000;
+	realtype t = 1;
 	flag = CVode(cvode_mem, tout, u, &t, CV_ONE_STEP);
 
 	realtype final[36];
@@ -41,8 +45,7 @@ int main()
 		final[i] = NV_Ith_S(u, i);
 	}
 
-	std::cout << "\nInitial list:";
-	printPoints(init, 12);
+	
 	std::cout << "\nFinal list:";
 	printPoints(final,12);
 	N_VDestroy(u);
