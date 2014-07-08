@@ -3,8 +3,9 @@
 #include <cvode/cvode.h>
 #include <sundials/sundials_math.h>
 #include <cstdio>
+#include <string>
 #include <iostream>
-
+#include <fstream>
 #include "force.h"
 
 void generate_nhbd( N_Vector& u,
@@ -12,6 +13,8 @@ void generate_nhbd( N_Vector& u,
                     std::vector<int>& nhbd_partner,
                     realtype r,
                     int numPoints);
+void writeToXYZFile(std::ofstream outFile,
+	int t, N_Vector points, int size);
 
 extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data) 
 {
@@ -20,7 +23,8 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 	
 
 	//Number of points for our configuration
-	int numPoints = 12, size = numPoints*3;
+	int numPoints = 12;
+	int size = numPoints*3;
 
 
 	//NOTE: assigment of spring points should be in struct; this is a temporary assignment for testing purposes
@@ -36,18 +40,19 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 	 
 	
 	//INITIALIZE UDOT
-	for (int i = 0; i < size; ++i)
+	for (int i = 0; i < size; i+=3)
 	{
 		NV_Ith_S(udot,i) = 0;
 	}
 
+	
 	int count = 0;
 	//calculate extensible springs
 	for (int i = 0; i < test.espringsize; ++i)
 	{
 		if (i % test.forceIndexE == 2) {
-			int x1index = test.espringlist[i-2];
-			int x2index = test.espringlist[i-1];
+			int x1index = espringlist[i-2];
+			int x2index = espringlist[i-1];
 			int y1index = x1index+numPoints;
 			int y2index = x2index+numPoints;
 			int z1index = x1index+2*(numPoints);
@@ -78,8 +83,9 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 		} 
 	}
 
+	
 	//torsional spring computation
-	/*for (int i = 0; i < test.tspringsize; ++i)
+	for (int i = 0; i < test.tspringsize; ++i)
 	{
 		if (i % test.forceIndexT == 4) {
 			//get x,y,z coords of points i, j, k, m
@@ -118,18 +124,9 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 		+ (x1 - x3)*(y2*y2 + z2*z2)
 		+ (x1 - x2)*(y3*y3 + z3*z3);
 		}
-	}*/
-
-	//van der Waals
-	//generate neighbor list every 10th step
-	realtype radius = test.r;
-	int curtime;
-	curtime = static_cast<int> (t);
-	if (curtime % 10 == 0){
-		generate_nhbd(u, test.nhbd, test.nhbd_partner, radius, numPoints);
 	}
 
-	//compute bending
+	//compute vdW
 	int isize = test.nhbd.size();
 	realtype eps = test.epsilon;
 	realtype del = test.delta;
@@ -197,4 +194,19 @@ void generate_nhbd( N_Vector& u,
 		}
 	}
 
+}
+void writeToXYZFile(std::ofstream outFile,
+	int t, N_Vector u, int size)
+{
+	outFile.open("output.xyz");
+
+
+	outFile << size << "\n"
+			<< "Frame: t =  " << t << "\n";
+	for (int i = 0; i<(size-3); i+=3) {
+		outFile << "C  " << NV_Ith_S(u, i) << "  "
+			    << NV_Ith_S(u, i+1) << "  " << NV_Ith_S(u, i+2)
+			    << "\n";
+	}
+	outFile.close();
 }

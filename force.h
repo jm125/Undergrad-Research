@@ -11,7 +11,13 @@
 #include <vector>
 
 
+
 extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data);
+/*void generate_nhbd( N_Vector& u,
+                    std::vector<int>& nhbd,
+                    std::vector<int>& nhbd_partner,
+                    realtype r,
+                    int numPoints);*/
 
 //Structure for configuration of hexagons. 
 struct hexconfig
