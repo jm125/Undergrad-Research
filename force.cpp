@@ -42,13 +42,13 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 	//INITIALIZE UDOT
 	for (int i = 0; i < size; i+=3)
 	{
-		NV_Ith_S(udot,i) = 0;
+		NV_Ith_S(udot,i) = 1;
 	}
 
 	
 	int count = 0;
 	//calculate extensible springs
-	for (int i = 0; i < test.espringsize; ++i)
+	/*for (int i = 0; i < test.espringsize; ++i)
 	{
 		if (i % test.forceIndexE == 2) {
 			int x1index = espringlist[i-2];
@@ -81,11 +81,11 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 			NV_Ith_S(udot, z2index) -= zgrad;
 
 		} 
-	}
+	}*/
 
 	
 	//torsional spring computation
-	for (int i = 0; i < test.tspringsize; ++i)
+	/*for (int i = 0; i < test.tspringsize; ++i)
 	{
 		if (i % test.forceIndexT == 4) {
 			//get x,y,z coords of points i, j, k, m
@@ -124,9 +124,10 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 		+ (x1 - x3)*(y2*y2 + z2*z2)
 		+ (x1 - x2)*(y3*y3 + z3*z3);
 		}
-	}
+	}*/
 
 	//compute vdW
+	/*
 	int isize = test.nhbd.size();
 	realtype eps = test.epsilon;
 	realtype del = test.delta;
@@ -157,7 +158,7 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 		NV_Ith_S(udot, z1index) += LJz;
 		NV_Ith_S(udot, z2index) -= LJz;
 
-	}
+	}*/
 
 }
 

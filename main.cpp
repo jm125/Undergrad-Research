@@ -59,7 +59,7 @@ int main()
 			}
 			outFile.close();
 			realtype radius = testhex.r;
-			generate_nhbd(u, testhex.nhbd, testhex.nhbd_partner, radius, numPoints);
+			//generate_nhbd(u, testhex.nhbd, testhex.nhbd_partner, radius, numPoints);
 		}
 	}
 
