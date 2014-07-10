@@ -10,7 +10,7 @@ void menu();
 int main()
 {
 	
-	void *cvode_mem = CVodeCreate(CV_ADAMS, CV_FUNCTIONAL);
+	void *cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
 
 	int flag;
 
@@ -38,8 +38,12 @@ int main()
 
 	flag = CVodeSetUserData(cvode_mem, &testhex);
 
-	realtype tout = 10000;
+	realtype tout = 100;
 	realtype t;
+
+
+	realtype radius = testhex.r;
+	generate_nhbd(u, testhex.nhbd, testhex.nhbd_partner, radius, numPoints);
 	while (t < tout) {
 		flag = CVode(cvode_mem, tout, u, &t, CV_ONE_STEP);
 		int curtime;
@@ -58,8 +62,15 @@ int main()
 					    << "\t\n";
 			}
 			outFile.close();
-			realtype radius = testhex.r;
-			//generate_nhbd(u, testhex.nhbd, testhex.nhbd_partner, radius, numPoints);
+			generate_nhbd(u, testhex.nhbd, testhex.nhbd_partner, radius, numPoints);
+			realtype check[36];
+			for (int i = 0; i < 36; ++i)
+			{
+				check[i] = NV_Ith_S(u, i);
+				
+			}
+			std::cout << "\nChecking at point " << t << ":";
+			printPoints(check,12);
 		}
 	}
 
@@ -85,4 +96,9 @@ void printPoints(realtype list[], int numPoints)
 		std::cout << (i < numPoints ? "x" : (i < (2*numPoints) ? "y" : "z")) << 
 		(i < numPoints ? i : (i < (2*numPoints) ? i - numPoints : i - (2*numPoints))) << ":\t " << list[i] << "\n";
 	}
+}
+
+void generateExtensibleSprings(N_Vector init, N_Vector& espringlist, int numPoints, int l)
+{
+
 }

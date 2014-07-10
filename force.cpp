@@ -40,15 +40,15 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 	 
 	
 	//INITIALIZE UDOT
-	for (int i = 0; i < size; i+=3)
+	for (int i = 0; i < size; i++)
 	{
-		NV_Ith_S(udot,i) = 1;
+		NV_Ith_S(udot,i) = 0;
 	}
 
 	
 	int count = 0;
 	//calculate extensible springs
-	/*for (int i = 0; i < test.espringsize; ++i)
+	for (int i = 0; i < test.espringsize; ++i)
 	{
 		if (i % test.forceIndexE == 2) {
 			int x1index = espringlist[i-2];
@@ -73,15 +73,15 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 			realtype ygrad = test.ks*(dist-test.l)*(y1-y2)/(dist);
 			realtype zgrad = test.ks*(dist-test.l)*(z1-z2)/(dist);
 
-			NV_Ith_S(udot, x1index) += xgrad;
-			NV_Ith_S(udot, x2index) -= xgrad;
-			NV_Ith_S(udot, y1index) += ygrad;
-			NV_Ith_S(udot, y2index) -= ygrad;
-			NV_Ith_S(udot, z1index) += zgrad;
-			NV_Ith_S(udot, z2index) -= zgrad;
+			NV_Ith_S(udot, x1index) -= xgrad;
+			NV_Ith_S(udot, x2index) += xgrad;
+			NV_Ith_S(udot, y1index) -= ygrad;
+			NV_Ith_S(udot, y2index) += ygrad;
+			NV_Ith_S(udot, z1index) -= zgrad;
+			NV_Ith_S(udot, z2index) += zgrad;
 
 		} 
-	}*/
+	}
 
 	
 	//torsional spring computation
@@ -127,7 +127,6 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 	}*/
 
 	//compute vdW
-	/*
 	int isize = test.nhbd.size();
 	realtype eps = test.epsilon;
 	realtype del = test.delta;
@@ -151,14 +150,14 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 		realtype LJy = LJconst*LJprime*y/LJdist;
 		realtype LJz = LJconst*LJprime*z/LJdist;
 
-		NV_Ith_S(udot, x1index) += LJx;
-		NV_Ith_S(udot, x2index) -= LJx;
-		NV_Ith_S(udot, y1index) += LJy;
-		NV_Ith_S(udot, y2index) -= LJy;
-		NV_Ith_S(udot, z1index) += LJz;
-		NV_Ith_S(udot, z2index) -= LJz;
+		NV_Ith_S(udot, x1index) -= LJx;
+		NV_Ith_S(udot, x2index) += LJx;
+		NV_Ith_S(udot, y1index) -= LJy;
+		NV_Ith_S(udot, y2index) += LJy;
+		NV_Ith_S(udot, z1index) -= LJz;
+		NV_Ith_S(udot, z2index) += LJz;
 
-	}*/
+	}
 
 }
 
@@ -173,7 +172,7 @@ void generate_nhbd( N_Vector& u,
 
 	realtype r2 = r*r;
 
-	for (int i = 0; i < numPoints - 1; ++i)
+	for (int i = 0; i < numPoints; ++i)
 	{
 		realtype x1 = NV_Ith_S(u, i);
 		realtype y1 = NV_Ith_S(u, i+numPoints);
