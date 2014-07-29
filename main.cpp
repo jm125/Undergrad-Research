@@ -4,37 +4,32 @@
 #include <sundials/sundials_math.h>
 #include "force.h"
 #include <fstream>
+#include <vector>
 
 void printPoints(realtype[], int);
-void menu();
+void PopulateLists(std::vector<double>&, std::vector<int>&, std::vector<int>&,int&);
 int main()
 {
 	
 	void *cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
 
 	int flag;
-
-	//define two hexagons, with 7 points each (including center point) - two points overlap
-	//also define vector containing x, y, and z coordinates
 		
-	//initialize xyz coordinates for all 12 points
-	realtype init[] = { 0.5,0,0.5,1.5,2,1.5,1,3,3.5,3,2,2.5,
-				  2,1,0,0,1,2,1,1,2,3,3,2,
-				  0,0,0,0,0,0,0,0,0,0,0,0 };
-	int numPoints = 12;
-	std::cout << "\nInitial list:";
-	printPoints(init, 12);
-
-	N_Vector u = N_VMake_Serial(36, init);
+	//initialize
+	int numPoints;
+	std::vector<int> extensibleSpringList;
+	std::vector<int> torsionalSpringList;
+	std::vector<double> init;
+	PopulateLists(init, extensibleSpringList, torsionalSpringList, numPoints);
+	N_Vector u = N_VNew_Serial(numPoints);
 	
-	//set tolerances
 	realtype reltol = RCONST(1e-9);
 	realtype abstol = RCONST(1e-9);
 
 	flag = CVodeInit(cvode_mem, force, RCONST(0), u);
 	flag = CVodeSStolerances(cvode_mem, reltol, abstol);
 
-	hexconfig testhex(u);
+	hexconfig testhex(u, numPoints, extensibleSpringList, torsionalSpringList);
 
 	flag = CVodeSetUserData(cvode_mem, &testhex);
 
@@ -44,16 +39,16 @@ int main()
 
 	realtype radius = testhex.r;
 	generate_nhbd(u, testhex.nhbd, testhex.nhbd_partner, radius, numPoints);
+
+	std::ofstream outFile;
+	outFile.open("output.xyz");
 	while (t < tout) {
 		flag = CVode(cvode_mem, tout, u, &t, CV_ONE_STEP);
 		int curtime;
 		curtime = static_cast<int> (t);
 
+		//TBD: change to verlet list
 		if (curtime % 10 == 0) {
-			std::ofstream outFile;
-			outFile.open("output.xyz");
-
-
 			outFile << numPoints << "\n"
 				    << "Frame: t =  " << t << "\n";
 			for (int i = 0; i<numPoints; i++) {
@@ -97,8 +92,68 @@ void printPoints(realtype list[], int numPoints)
 		(i < numPoints ? i : (i < (2*numPoints) ? i - numPoints : i - (2*numPoints))) << ":\t " << list[i] << "\n";
 	}
 }
-
-void generateExtensibleSprings(N_Vector init, N_Vector& espringlist, int numPoints, int l)
+void PopulateLists(std::vector<double>& init, 
+	std::vector<int>& extensibleSprings, 
+	std::vector<int>& torsionalSprings,
+	int& numPoints)
 {
+	std::ifstream inFile;
+	inFile.open("init.txt");
 
+	char line[10];
+	std::vector<char> fileLines;
+
+	numPoints = 0;
+
+	if(!inFile) 
+	{
+		std::cout << "Failed to open input file";
+	}
+	else
+	{
+		while(!inFile.eof())
+		{
+			inFile >> line;
+			fileLines.push_back(line);
+		}
+	}
+	inFile.close();
+
+	int listID = 0;
+	int initIndex = 0;
+	int curPointInt;
+	double curPoint;
+	for (int i = 0; i < fileLines.size(); ++i)
+	{
+		if (fileLines.at(i) == "e")
+		{
+			listID = 1;
+		}
+		else if (fileLines.at(i) == "t")
+		{
+			listID = 2;
+		}
+		else {
+			switch(listID) {
+				case 0:
+					curPoint = atof(fileLines.at(i));
+					//NV_Ith_S(init, initIndex) = curPoint;
+					init.push_back(curPoint);
+					initIndex++;
+					numPoints++;
+					break;
+				case 1:
+					curPointInt = atoi(fileLines.at(i));
+					extensibleSprings.push_back(curPointInt);
+					break;
+				case 2:
+					curPointInt = atoi(fileLines.at(i));
+					torsionalSprings.push_back(curPointInt);
+					break;
+				default:
+					std::cout << "Error";
+					break;
+			}
+		}
+	}
 }

@@ -19,26 +19,7 @@ void writeToXYZFile(std::ofstream outFile,
 extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data) 
 {
 	hexconfig& test = *((hexconfig*)(user_data));
-
-	
-
-	//Number of points for our configuration
-	int numPoints = 12;
-	int size = numPoints*3;
-
-
-	//NOTE: assigment of spring points should be in struct; this is a temporary assignment for testing purposes
-	int espringlist[] = { 0,1,0,1,2,0,2,3,0,3,4,
-			       	       0,4,5,0,5,0,0,0,6,1,1,6,1,2,6,1,3,6,1,4,6,1,5,
-				       6,1,5,10,0,10,9,0,8,7,0,7,4,0,5,11,1,10,11,1,
-				       9,11,1,8,11,1,7,11,1,4,11,1};
-
-	int tspringlist[] = { 1,6,0,5,1,0,1,6,2,1,1,2,6,3,1,2,3,6,4,
-						1,3,4,6,5,0,4,5,6,0,1,6,4,5,11,0,4,11,
-						5,10,1,5,11,10,9,1,10,11,9,8,1,9,11,
-						8,7,1,8,11,7,4,1 };
-	 
-	
+	int size = test.numPoints*3;
 	//INITIALIZE UDOT
 	for (int i = 0; i < size; i++)
 	{
@@ -51,12 +32,12 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 	for (int i = 0; i < test.espringsize; ++i)
 	{
 		if (i % test.forceIndexE == 2) {
-			int x1index = espringlist[i-2];
-			int x2index = espringlist[i-1];
-			int y1index = x1index+numPoints;
-			int y2index = x2index+numPoints;
-			int z1index = x1index+2*(numPoints);
-			int z2index = x2index+2*(numPoints);
+			int x1index = test.espringlist.at(i-2);
+			int x2index = test.espringlist.at(i-1);
+			int y1index = x1index+test.numPoints;
+			int y2index = x2index+test.numPoints;
+			int z1index = x1index+2*(test.numPoints);
+			int z2index = x2index+2*(test.numPoints);
 
 			realtype x1 = NV_Ith_S(u,x1index);
 			realtype x2 = NV_Ith_S(u,x2index);
@@ -134,10 +115,10 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 	for (int i = 0; i < isize; ++i) {
 		int x1index = test.nhbd.at(i);
 		int x2index = test.nhbd_partner.at(i);
-		int y1index = x1index+numPoints;
-		int y2index = x2index+numPoints;
-		int z1index = x1index+2*(numPoints);
-		int z2index = x2index+2*(numPoints);
+		int y1index = x1index+test.numPoints;
+		int y2index = x2index+test.numPoints;
+		int z1index = x1index+2*(test.numPoints);
+		int z2index = x2index+2*(test.numPoints);
 
 		realtype x = NV_Ith_S(u,x1index) - NV_Ith_S(u,x2index);
 		realtype y = NV_Ith_S(u,y1index) - NV_Ith_S(u,y2index);
