@@ -39,6 +39,7 @@ struct hexconfig
 	int numPoints;
 	std::vector<int> tspringlist;
 	std::vector<int> espringlist;
+	realtype a;
 
 	hexconfig(N_Vector& init, int npoints, std::vector<int> elist, std::vector<int> tlist)
 	 {
@@ -49,6 +50,7 @@ struct hexconfig
 		l = 1;
 		delta = 1;
 		epsilon = 1;
+		a = 0;
 
 		numPoints = npoints;
 		for (int i = 0; i < elist.size(); ++i)

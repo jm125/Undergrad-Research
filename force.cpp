@@ -64,26 +64,26 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 		} 
 	}
 
-	
 	//torsional spring computation
-	/*for (int i = 0; i < test.tspringsize; ++i)
+	//May want to double check that these formulas are correct, until then leave kb = 0
+	for (int i = 0; i < test.tspringsize; ++i)
 	{
 		if (i % test.forceIndexT == 4) {
 			//get x,y,z coords of points i, j, k, m
-			int xiindex = tspringlist[i-4];
-			int xjindex = tspringlist[i-3];
-			int xkindex = tspringlist[i-2];
-			int xmindex = tspringlist[i-1];
+			int xiindex = test.tspringlist[i-4];
+			int xjindex = test.tspringlist[i-3];
+			int xkindex = test.tspringlist[i-2];
+			int xmindex = test.tspringlist[i-1];
 
-			int yiindex = xiindex+numPoints;
-			int yjindex = xjindex+numPoints;
-			int ykindex = xkindex+numPoints;
-			int ymindex = xmindex+numPoints;
+			int yiindex = xiindex+test.numPoints;
+			int yjindex = xjindex+test.numPoints;
+			int ykindex = xkindex+test.numPoints;
+			int ymindex = xmindex+test.numPoints;
 
-			int ziindex = xiindex+numPoints*2;
-			int zjindex = xjindex+numPoints*2;
-			int zkindex = xkindex+numPoints*2;
-			int zmindex = xmindex+numPoints*2;
+			int ziindex = xiindex+test.numPoints*2;
+			int zjindex = xjindex+test.numPoints*2;
+			int zkindex = xkindex+test.numPoints*2;
+			int zmindex = xmindex+test.numPoints*2;
 
 			realtype xi = NV_Ith_S(u,xiindex);
 			realtype xj = NV_Ith_S(u,xjindex);
@@ -100,12 +100,35 @@ extern "C" int force(realtype t, N_Vector u, N_Vector udot, void *user_data)
 			realtype zk = NV_Ith_S(u,zkindex);
 			realtype zm = NV_Ith_S(u,zmindex);
 
-			realtype normgrad = (xi + xj - 2*xh)*(yi*yi+zi*zj)
-		+ (xi - xj)*((yj*yh-yi*yj)+(zj*zh-zi*zh))
-		+ (x1 - x3)*(y2*y2 + z2*z2)
-		+ (x1 - x2)*(y3*y3 + z3*z3);
+			realtype xidot = -1*test.kb*(0.75*test.a - (xj-xk)*(xj-xi)*(xm-xj)*(xk-xj)-(xj-xk)*(xk-xj)*(xj-xk)*(xm-xj));
+			realtype xjdot = xidot;
+			realtype xkdot = -xidot;
+			realtype xmdot = -xidot;
+
+			realtype yidot = -1*test.kb*(0.75*test.a - (yj-yk)*(yj-yi)*(ym-yj)*(yk-yj)-(yj-yk)*(yk-yj)*(yj-yk)*(ym-yj));
+			realtype yjdot = yidot;
+			realtype ykdot = -yidot;
+			realtype ymdot = -yidot;
+
+			realtype zidot = -1*test.kb*(0.75*test.a - (zj-zk)*(zj-zi)*(zm-zj)*(zk-zj)-(zj-zk)*(zk-zj)*(zj-zk)*(zm-zj));
+			realtype zjdot = zidot;
+			realtype zkdot = -zidot;
+			realtype zmdot = -zidot;
+
+			NV_Ith_S(udot, xiindex) += xidot;
+			NV_Ith_S(udot, xjindex) += xjdot;
+			NV_Ith_S(udot, xkindex) += xkdot;
+			NV_Ith_S(udot, xmindex) += xmdot;
+			NV_Ith_S(udot, yiindex) += yidot;
+			NV_Ith_S(udot, yjindex) += yjdot;
+			NV_Ith_S(udot, ykindex) += ykdot;
+			NV_Ith_S(udot, ymindex) += ymdot;
+			NV_Ith_S(udot, ziindex) += zidot;
+			NV_Ith_S(udot, zjindex) += zjdot;
+			NV_Ith_S(udot, zkindex) += zkdot;
+			NV_Ith_S(udot, zmindex) += zmdot;
 		}
-	}*/
+	}
 
 	//compute vdW
 	int isize = test.nhbd.size();
@@ -166,9 +189,8 @@ void generate_nhbd( N_Vector& u,
 			realtype y2 = NV_Ith_S(u, j+numPoints);
 			realtype z2 = NV_Ith_S(u, j+2*numPoints);
 
-			//calculate distance between points
-			realtype dist2 = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
-			if (dist2 <= r2) {
+			realtype distSquared = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
+			if (distSquared <= r2) {
 				nhbd.push_back(i);
 				nhbd_partner.push_back(j);
 			}
